@@ -1,0 +1,19 @@
+# depslib dependency file v1.0
+1395063357 source:c:\users\m.somorovsky\documents\cbprojects\fms2\main.cpp
+	<iostream>
+	<fstream>
+	"FSM.h"
+
+1395059057 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\fsm.cpp
+	"FSM.h"
+
+1395063578 c:\users\m.somorovsky\documents\cbprojects\fms2\include\fsm.h
+	<string>
+	"State.h"
+
+1395062903 c:\users\m.somorovsky\documents\cbprojects\fms2\include\state.h
+	<string>
+
+1395062913 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\state.cpp
+	"State.h"
+
