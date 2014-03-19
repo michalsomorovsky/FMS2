@@ -1,19 +1,32 @@
 # depslib dependency file v1.0
-1395063357 source:c:\users\m.somorovsky\documents\cbprojects\fms2\main.cpp
+1395243355 source:c:\users\m.somorovsky\documents\cbprojects\fms2\main.cpp
 	<iostream>
 	<fstream>
 	"FSM.h"
 
-1395059057 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\fsm.cpp
+1395246176 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\fsm.cpp
+	<iostream>
 	"FSM.h"
-
-1395063578 c:\users\m.somorovsky\documents\cbprojects\fms2\include\fsm.h
-	<string>
 	"State.h"
 
-1395062903 c:\users\m.somorovsky\documents\cbprojects\fms2\include\state.h
+1395245870 c:\users\m.somorovsky\documents\cbprojects\fms2\include\fsm.h
+	<string>
+	<vector>
+	"State.h"
+
+1395243416 c:\users\m.somorovsky\documents\cbprojects\fms2\include\state.h
+	<string>
+	"Transition.h"
+	<vector>
+
+1395243441 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\state.cpp
+	"State.h"
+	<vector>
+
+1395246144 c:\users\m.somorovsky\documents\cbprojects\fms2\include\transition.h
 	<string>
 
-1395062913 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\state.cpp
-	"State.h"
+1395246189 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\transition.cpp
+	"Transition.h"
+	<iostream>
 

@@ -13,6 +13,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="include" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
@@ -22,6 +23,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -32,7 +34,13 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="include/FSM.h" />
+		<Unit filename="include/State.h" />
+		<Unit filename="include/Transition.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="src/FSM.cpp" />
+		<Unit filename="src/State.cpp" />
+		<Unit filename="src/Transition.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

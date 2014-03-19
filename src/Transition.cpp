@@ -1,8 +1,13 @@
 #include "Transition.h"
+#include <iostream>
 
-Transition::Transition()
+using namespace std;
+
+Transition::Transition(string transition, int index)
 {
-    //ctor
+    event = transition.substr(0, transition.find_first_of("=",0));
+    nextState  = transition.substr(transition.find_first_of("=",0),string::npos);
+    indexOfNextState = index;
 }
 
 Transition::~Transition()
