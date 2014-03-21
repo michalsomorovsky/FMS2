@@ -20,7 +20,7 @@ bool State::isEmpty()
     return this->Getname().empty();
 }
 
-void State::setTransition(string val, int index)
+void State::setTransition(string val)
 {
-    transition.push_back(new Transition(val, index));
+    transition.push_back(new Transition(val));
 }

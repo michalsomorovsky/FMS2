@@ -13,12 +13,12 @@ FSM::~FSM()
     //dtor
 }
 
-void FSM::addTransition(string transition, int index)
+void FSM::addTransition(string transition)
 {
     /*int i=0;
     while(!states[i].isEmpty()) i++;
     states[i].setTransition(transition);*/
-    states.back()->setTransition(transition, index);
+    states.back()->setTransition(transition);
     //cout<<transition<<endl;
 }
 
@@ -41,8 +41,17 @@ void FSM::connectAll()
         vector <int> connections;
         for(int j=0; j<states[i]->getTransitionSize(); j++)
         {
-            connections.push_back(states[i]->getTransition(j)->getIndex());
-            cout<<states[i]->getTransition(j)->Getevent()<<endl;
+            for(int k=0; k<states.size(); k++)
+            {
+                if(states[k]->Getname().compare(states[i]->getTransition(j)->GetnextState()) == 0 )
+                {
+                    connections.push_back(states[k]->getIndex());
+                    states[i]->getTransition(j)->setIndex(states[k]->getIndex());
+                    break;
+                }
+            }
+           // connections.push_back(states[i]->getTransition(j)->getIndex());
+            //cout<<states[i]->getTransition(j)->Getevent()<<endl;
         }
         transitions.push_back(connections);
     }

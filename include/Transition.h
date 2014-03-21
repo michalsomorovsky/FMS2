@@ -8,13 +8,14 @@ using namespace std;
 class Transition
 {
     public:
-        Transition(string transition, int index);
+        Transition(string transition);
         virtual ~Transition();
         string Getevent() { return event; }
         void Setevent(string val) { event = val; }
         string GetnextState() { return nextState; }
         void SetnextState(string val) { nextState = val; }
         int getIndex() { return indexOfNextState; }
+        void setIndex(int val) { indexOfNextState = val; }
     protected:
     private:
         string event;

@@ -17,7 +17,7 @@ class State
         string Getaction() { return action; }
         void Setaction(string val) { action = val; }
         bool isEmpty();
-        void setTransition(string val, int index);
+        void setTransition(string val);
         Transition* getTransition(int i) { return transition[i]; }
         int getTransitionSize() { return transition.size(); }
         void setIndex(int val) { index = val; }
