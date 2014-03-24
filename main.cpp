@@ -2,6 +2,8 @@
 #include <fstream>
 #include "FSM.h"
 #include <gtk/gtk.h>
+#include <cairo.h>
+#include <math.h>
 
 GdkPixbuf *create_pixbuf(const gchar * filename)
 {
@@ -14,6 +16,12 @@ GdkPixbuf *create_pixbuf(const gchar * filename)
    }
 
    return pixbuf;
+}
+
+void on_window1_destroy (GtkWindow *object, gpointer user_data)
+{
+    cout<<"lama";
+    gtk_main_quit ();
 }
 
 using namespace std;
@@ -35,6 +43,27 @@ int main(int argc, char *argv[])
       G_CALLBACK(gtk_main_quit), NULL);
 
   gtk_main();*/
+
+    GtkBuilder      *builder;
+    GtkWidget       *window;
+    GtkDrawingArea  *area;
+
+    gtk_init (&argc, &argv);
+
+    builder = gtk_builder_new ();
+    gtk_builder_add_from_file (builder, "C:/Users/m.somorovsky/Documents/CBProjects/FMS2/gtkuiu.glade", NULL);
+    window = GTK_WIDGET (gtk_builder_get_object (builder, "window1"));
+    area = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "drawningarea1"));
+    gtk_builder_connect_signals (builder, NULL);
+
+    g_object_unref (G_OBJECT (builder));
+    //g_signal_connect_swapped(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(on_window1_destroy), NULL);
+
+
+
+    gtk_widget_show (window);
+    gtk_main ();
 
     ifstream file ("C:/Users/m.somorovsky/Dropbox/Opt-block-only.seq");
     string line;

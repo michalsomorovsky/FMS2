@@ -1,9 +1,11 @@
 # depslib dependency file v1.0
-1395405009 source:c:\users\m.somorovsky\documents\cbprojects\fms2\main.cpp
+1395675049 source:c:\users\m.somorovsky\documents\cbprojects\fms2\main.cpp
 	<iostream>
 	<fstream>
 	"FSM.h"
 	<gtk/gtk.h>
+	<cairo.h>
+	<math.h>
 
 1395403085 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\fsm.cpp
 	<iostream>
