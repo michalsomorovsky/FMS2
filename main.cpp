@@ -6,50 +6,63 @@
 #include <math.h>
 
 void loadFSM();
-static void do_drawing(cairo_t *);
-
-void on_window1_destroy (GtkWindow *object, gpointer user_data)
-{
-    cout<<"lama";
-    gtk_main_quit ();
-}
+static void do_drawing(cairo_t *, char* text);
+static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
 
 using namespace std;
+
+typedef struct _ChData ChData;
+struct _ChData
+{
+    /* Widgets */
+    GtkFileChooser *file_chooser;  /* Main application window */
+    GtkDrawingArea *darea;   /* Chart drawing area */
+};
+
+extern "C" __declspec(dllexport) void
+on_button1_clicked (GtkButton *button, gpointer data)
+{
+    //cairo_t *cr;
+    g_signal_connect(G_OBJECT(data), "draw", G_CALLBACK(on_draw_event), (void *)"lama");
+    gtk_widget_queue_draw(GTK_WIDGET(((ChData *)data)->darea));
+    //do_drawing(cr);
+    //g_print("lama");
+}
+
+extern "C" __declspec(dllexport) void
+on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GtkFileChooser *f = ((ChData *)user_data)->file_chooser;
+
+    //gtk_dialog_run()
+    g_print("open");
+}
 
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
                               gpointer user_data)
 {
-    do_drawing(cr);
+    //string text = new string(user_data);
+    do_drawing(cr, (gchar *) user_data);
 
     return FALSE;
 }
 
-static void do_drawing(cairo_t *cr)
+static void do_drawing(cairo_t *cr, char* text)
 {
     double xc = 100.0;
     double yc = 100.0;
-    double radius = 10.0;
+    double radius = 50.0;
     double angle1 = 0.0  * (M_PI/180.0);  /* angles are specified */
     double angle2 = 360.0 * (M_PI/180.0);  /* in radians           */
 
-    cairo_set_line_width (cr, 10.0);
+    //cairo_set_line_width (cr, 10.0);
     cairo_arc (cr, xc, yc, radius, angle1, angle2);
     cairo_stroke (cr);
 
-    cairo_set_line_width (cr, 1.0);
-    cairo_rectangle(cr, 200.0, 100.0, 100.0, 100.0);
-    cairo_stroke(cr);
-
-    //cairo_move_to(cr, 0.0, 0.0);
-    //cairo_line_to(cr, 100.0, 100.0);
-    //cairo_line_to(cr, 100.0, 150.0);
-    //cairo_curve_to(cr, 120.0, 130.0, 140.0, 150.0, 200.0, 150.0);
-    //cairo_move_to(cr, 250.0, 150.0);
-    //cairo_text_path(cr, "lama");
-    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-    cairo_scale(cr, 1, 0.7);
-    cairo_arc(cr, 300, 100, 50, 0, 2*M_PI);
-    cairo_fill(cr);
+    //cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+    //cairo_scale(cr, 1, 0.7);
+    //cairo_arc(cr, 300, 100, 50, 0, 2*M_PI);
+    //cairo_fill(cr);
     //cairo_stroke(cr);
 
     PangoLayout *layout;
@@ -62,7 +75,7 @@ static void do_drawing(cairo_t *cr)
 
     layout = pango_cairo_create_layout (cr);
     pango_layout_set_font_description (layout, font_description);
-    pango_layout_set_text (layout, "Hello, world", -1);
+    pango_layout_set_text (layout, text, -1);
 
     cairo_set_source_rgb (cr, 0.0, 0.0, 1.0);
     cairo_move_to (cr, 250.0, 100.0);
@@ -107,18 +120,29 @@ int main(int argc, char *argv[])
     GtkBuilder      *builder;
     GtkWidget       *window;
     GtkDrawingArea  *area;
-
+    GtkButton       *button;
+    ChData *data;
     gtk_init (&argc, &argv);
 
     builder = gtk_builder_new ();
     gtk_builder_add_from_file (builder, "C:/Users/m.somorovsky/Documents/CBProjects/FMS2/gtkuiu.glade", NULL);
     window = GTK_WIDGET (gtk_builder_get_object (builder, "window1"));
-    area = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "drawningarea1"));
-    gtk_builder_connect_signals (builder, NULL);
+    area = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "drawingarea1"));
+    button = GTK_BUTTON(gtk_builder_get_object(builder, "button1"));
 
+    data = g_slice_new( ChData );
+    data->darea = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "drawingarea1"));
+    data->file_chooser = GTK_FILE_CHOOSER(gtk_builder_get_object(builder, "filechooserdialog1"));
+
+    gtk_builder_connect_signals (builder, data);
+
+    //g_signal_connect(G_OBJECT(area), "draw", G_CALLBACK(on_draw_event), NULL);
     g_object_unref (G_OBJECT (builder));
-    g_signal_connect_swapped(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
-    g_signal_connect(G_OBJECT(area), "draw", G_CALLBACK(on_draw_event), NULL);
+    //g_signal_connect(G_OBJECT(area), "draw", G_CALLBACK(on_draw_event), NULL);
+    //g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(on_button1_clicked), NULL);
+
+    //g_signal_connect_swapped(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
     //g_signal_connect(G_OBJECT(area), "draw", )
     //g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(on_window1_destroy), NULL);
 
