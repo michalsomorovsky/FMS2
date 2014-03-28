@@ -5,8 +5,8 @@
 #include <cairo.h>
 #include <math.h>
 
-void loadFSM();
-static void do_drawing(cairo_t *, char* text);
+void loadFSM(char *filename);
+static void do_drawing(cairo_t *, char* text, double x, double y);
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
 
 using namespace std;
@@ -23,7 +23,7 @@ extern "C" __declspec(dllexport) void
 on_button1_clicked (GtkButton *button, gpointer data)
 {
     //cairo_t *cr;
-    g_signal_connect(G_OBJECT(data), "draw", G_CALLBACK(on_draw_event), (void *)"lama");
+    g_signal_connect(G_OBJECT(((ChData *)data)->darea), "draw", G_CALLBACK(on_draw_event), (void *)"lamka");
     gtk_widget_queue_draw(GTK_WIDGET(((ChData *)data)->darea));
     //do_drawing(cr);
     //g_print("lama");
@@ -32,58 +32,75 @@ on_button1_clicked (GtkButton *button, gpointer data)
 extern "C" __declspec(dllexport) void
 on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
+
+    //g_print(((ChData *)user_data)->file_chooser);
     GtkFileChooser *f = ((ChData *)user_data)->file_chooser;
 
-    //gtk_dialog_run()
-    g_print("open");
+    //gtk_dialog_run(GTK_DIALOG(f));
+
+    if (gtk_dialog_run(GTK_DIALOG(f)) == GTK_RESPONSE_ACCEPT)
+    {
+        char *filename;
+        filename = gtk_file_chooser_get_filename(f);
+        g_print(filename);
+        loadFSM(filename);
+    }
+    gtk_widget_hide(GTK_WIDGET(f));
+
 }
 
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
                               gpointer user_data)
 {
     //string text = new string(user_data);
-    do_drawing(cr, (gchar *) user_data);
+    do_drawing(cr, (gchar *) user_data, 300.0, 300.0);
 
     return FALSE;
 }
 
-static void do_drawing(cairo_t *cr, char* text)
+static void do_drawing(cairo_t *cr, char* text, double x, double y)
 {
-    double xc = 100.0;
-    double yc = 100.0;
+    double xc = x;
+    double yc = y;
     double radius = 50.0;
     double angle1 = 0.0  * (M_PI/180.0);  /* angles are specified */
     double angle2 = 360.0 * (M_PI/180.0);  /* in radians           */
+    for(int i=0; i<5; i++)
+    {
+        for(int j=0; j<5; j++)
+        {
 
-    //cairo_set_line_width (cr, 10.0);
-    cairo_arc (cr, xc, yc, radius, angle1, angle2);
-    cairo_stroke (cr);
+            //cairo_set_line_width (cr, 10.0);
+            //cairo_move_to(cr, xc+(i*105), yc+(j*105));
+            cairo_arc (cr, xc+(i*105), yc+(j*105), radius, angle1, angle2);
+            cairo_stroke (cr);
 
-    //cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-    //cairo_scale(cr, 1, 0.7);
-    //cairo_arc(cr, 300, 100, 50, 0, 2*M_PI);
-    //cairo_fill(cr);
-    //cairo_stroke(cr);
+            //cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+            //cairo_scale(cr, 1, 0.7);
+            //cairo_arc(cr, 300, 100, 50, 0, 2*M_PI);
+            //cairo_fill(cr);
+            //cairo_stroke(cr);
 
-    PangoLayout *layout;
-    PangoFontDescription *font_description;
+            PangoLayout *layout;
+            PangoFontDescription *font_description;
 
-    font_description = pango_font_description_new ();
-    pango_font_description_set_family (font_description, "serif");
-    pango_font_description_set_weight (font_description, PANGO_WEIGHT_BOLD);
-    pango_font_description_set_absolute_size (font_description, 12 * PANGO_SCALE);
+            font_description = pango_font_description_new ();
+            pango_font_description_set_family (font_description, "serif");
+            pango_font_description_set_weight (font_description, PANGO_WEIGHT_BOLD);
+            pango_font_description_set_absolute_size (font_description, 12 * PANGO_SCALE);
 
-    layout = pango_cairo_create_layout (cr);
-    pango_layout_set_font_description (layout, font_description);
-    pango_layout_set_text (layout, text, -1);
+            layout = pango_cairo_create_layout (cr);
+            pango_layout_set_font_description (layout, font_description);
+            pango_layout_set_text (layout, text, -1);
 
-    cairo_set_source_rgb (cr, 0.0, 0.0, 1.0);
-    cairo_move_to (cr, 250.0, 100.0);
-    pango_cairo_show_layout (cr, layout);
+            cairo_set_source_rgb (cr, 0.0, 0.0, 1.0);
+            cairo_move_to (cr, x-20+(i*105), y+(j*105)-5);
+            pango_cairo_show_layout (cr, layout);
 
-    g_object_unref (layout);
-    pango_font_description_free (font_description);
-
+            g_object_unref (layout);
+            pango_font_description_free (font_description);
+        }
+    }
     /* draw helping lines */
     //cairo_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
     //cairo_set_line_width (cr, 6.0);
@@ -103,19 +120,19 @@ int main(int argc, char *argv[])
 {
     /*GtkWidget *window;
 
-  gtk_init(&argc, &argv);
+    gtk_init(&argc, &argv);
 
-  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title(GTK_WINDOW(window), "icon");
-  gtk_window_set_default_size(GTK_WINDOW(window), 500, 500);
-  gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-  gtk_window_set_icon(GTK_WINDOW(window), create_pixbuf("web.png"));
-  gtk_widget_show(window);
+    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window), "icon");
+    gtk_window_set_default_size(GTK_WINDOW(window), 500, 500);
+    gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+    gtk_window_set_icon(GTK_WINDOW(window), create_pixbuf("web.png"));
+    gtk_widget_show(window);
 
-  g_signal_connect_swapped(G_OBJECT(window), "destroy",
+    g_signal_connect_swapped(G_OBJECT(window), "destroy",
       G_CALLBACK(gtk_main_quit), NULL);
 
-  gtk_main();*/
+    gtk_main();*/
 
     GtkBuilder      *builder;
     GtkWidget       *window;
@@ -150,17 +167,15 @@ int main(int argc, char *argv[])
 
     gtk_widget_show (window);
 
-    loadFSM();
-
     gtk_main ();
 
 
     return 0;
 }
 
-void loadFSM()
+void loadFSM(char *filename)
 {
-    ifstream file ("C:/Users/m.somorovsky/Dropbox/Opt-block-only.seq");
+    ifstream file (filename);
     string line;
     FSM fsm;
     //cout<<sizeof(fsm.stavy)/sizeof(*fsm.stavy);
