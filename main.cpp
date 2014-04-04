@@ -4,7 +4,7 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include <math.h>
-#include <windows.h>
+#include <gvc.h>
 
 FSM loadFSM(char *filename, gpointer data);
 static void do_drawing(cairo_t *, char* text, double x, double y);
@@ -48,8 +48,9 @@ on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
         FSM fsm = loadFSM(filename, user_data);
         ((ChData *)user_data)->fsm = fsm;
 
-        g_signal_connect(G_OBJECT(((ChData *)user_data)->darea), "draw", G_CALLBACK(on_draw_event), user_data);
-        gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
+        gulong h_id = g_signal_connect(G_OBJECT(((ChData *)user_data)->darea), "draw", G_CALLBACK(on_draw_event), user_data);
+        //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
+        //g_signal_handler_disconnect((((ChData *)user_data)->darea), h_id);
     }
     gtk_widget_hide(GTK_WIDGET(f));
 
@@ -175,8 +176,10 @@ FSM loadFSM(char *filename, gpointer data)
     ifstream file (filename);
     string line;
     FSM fsm;
-    //cout<<sizeof(fsm.stavy)/sizeof(*fsm.stavy);
-    //fsm.addState("lama");
+    GVC_t *gvc;
+    Agraph_t *g;
+
+
     if(file.is_open())
     {
         string action;
@@ -206,25 +209,28 @@ FSM loadFSM(char *filename, gpointer data)
 
 
         //int i=0;
-        for(int i=0; i<fsm.transitions.size(); i++)
+        /*for(int i=0; i<fsm.transitions.size(); i++)
         {
             //cout<<"stav: "<<i<<" -> ";
             for(int j=0; j<fsm.transitions[i].size(); j++)
             {
                 cout<<i<<" -> "<<fsm.transitions[i][j]<<" [ label = \""<<fsm.states[i]->getTransition(j)->Getevent()<<"\" ];"<<endl;
             }
-            //cout<<endl;
-        }
-
-        /*for(int i=0; i<fsm.states.size(); i++)
+        }*/
+        string cp;
+        cp = "digraph finite_state_machine { rankdir=LR;   size=\"200,5\" node [shape = circle];\n";
+        for(int i=0; i<fsm.states.size(); i++)
         {
-            cout<<i<<": "<<fsm.states[i]->Getname()<<endl;
                 for(int j=0; j<fsm.states[i]->getTransitionSize(); j++)
                 {
-                    cout<<fsm.states[i]->getTransition(j)->getIndex()<<": "<<fsm.states[i]->getTransition(j)->GetnextState()<<endl;
+                    cp += fsm.states[i]->Getname() + " -> " + fsm.states[i]->getTransition(j)->GetnextState() + " [ label = \"" + fsm.states[i]->getTransition(j)->Getevent() + "\" ];\n";
+                    //cout<<fsm.states[i]->Getname()<<" -> "<<fsm.states[i]->getTransition(j)->GetnextState()<<" [ label = \""<<fsm.states[i]->getTransition(j)->Getevent()<<"\" ];"<<endl;
                 }
-        }*/
+        }
+        cp+="}";
+        gvc = gvContext();
 
+        cout<<cp<<endl;
         return fsm;
     }
     else cout<<"CHYBA"<<endl;

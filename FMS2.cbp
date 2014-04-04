@@ -15,10 +15,13 @@
 					<Add option="-g" />
 					<Add option="`pkg-config --cflags gtk+-3.0 `" />
 					<Add directory="include" />
+					<Add directory="../../../../../Program Files (x86)/Graphviz2.36/include/graphviz" />
 				</Compiler>
 				<Linker>
 					<Add option="`pkg-config --libs gtk+-3.0 `" />
+					<Add option="`pkg-config libgvc --libs `" />
 					<Add directory="../../../../../gtk" />
+					<Add directory="../../../../../Program Files (x86)/Graphviz2.36/lib/release/lib" />
 				</Linker>
 			</Target>
 			<Target title="Release">

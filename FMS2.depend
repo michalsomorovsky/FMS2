@@ -1,12 +1,12 @@
 # depslib dependency file v1.0
-1396271711 source:c:\users\m.somorovsky\documents\cbprojects\fms2\main.cpp
+1396616696 source:c:\users\m.somorovsky\documents\cbprojects\fms2\main.cpp
 	<iostream>
 	<fstream>
 	"FSM.h"
 	<gtk/gtk.h>
 	<cairo.h>
 	<math.h>
-	<windows.h>
+	<gvc.h>
 
 1395406664 c:\users\m.somorovsky\documents\cbprojects\fms2\include\fsm.h
 	<string>
@@ -2499,4 +2499,47 @@
 1395406680 source:c:\users\m.somorovsky\documents\cbprojects\fms2\src\transition.cpp
 	"Transition.h"
 	<iostream>
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\gvc.h
+	"types.h"
+	"gvplugin.h"
+
+1389464186 c:\program files (x86)\graphviz2.36\include\graphviz\types.h
+	<stdio.h>
+	<assert.h>
+	<signal.h>
+	"geom.h"
+	"gvcext.h"
+	"pathgeom.h"
+	"textspan.h"
+	"cgraph.h"
+	"usershape.h"
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\geom.h
+	"arith.h"
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\arith.h
+	<limits.h>
+	<values.h>
+	<math.h>
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\gvcext.h
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\pathgeom.h
+
+1389484784 c:\program files (x86)\graphviz2.36\include\graphviz\textspan.h
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\cgraph.h
+	"cdt.h"
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\cdt.h
+	"config.h"
+	<stddef.h>
+	<string.h>
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\usershape.h
+	"cdt.h"
+
+1389463184 c:\program files (x86)\graphviz2.36\include\graphviz\gvplugin.h
+	"gvcext.h"
 
