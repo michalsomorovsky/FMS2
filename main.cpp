@@ -9,7 +9,7 @@
 FSM loadFSM(char *filename, gpointer data);
 static void do_drawing(cairo_t *, char* text, double x, double y);
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
-
+void drawGraph(Agraph_t *g);
 using namespace std;
 
 typedef struct _ChData ChData;
@@ -20,6 +20,13 @@ struct _ChData
     GtkDrawingArea *darea;   /* Chart drawing area */
     FSM fsm;
 };
+
+struct
+{
+    int nodesCount;
+    int coordx[100];
+    int coordy[100];
+} nodesCoord;
 
 extern "C" __declspec(dllexport) void
 on_toolbutton1_clicked (GtkToolButton *button, gpointer data)
@@ -46,9 +53,11 @@ on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
         filename = gtk_file_chooser_get_filename(f);
         g_print(filename);
         FSM fsm = loadFSM(filename, user_data);
-        ((ChData *)user_data)->fsm = fsm;
+        //cout<<sizeof(fsm)<<endl;
+        //cout<<sizeof(((ChData *)user_data)->fsm)<<endl;
 
         gulong h_id = g_signal_connect(G_OBJECT(((ChData *)user_data)->darea), "draw", G_CALLBACK(on_draw_event), user_data);
+        //gtk_widget_get_preferred_size(((ChData *)user_data)->darea, )
         //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
         //g_signal_handler_disconnect((((ChData *)user_data)->darea), h_id);
     }
@@ -59,7 +68,7 @@ on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
                               gpointer user_data)
 {
-    cout<<((ChData *)user_data)->fsm.states.size()<<endl;
+    /*cout<<((ChData *)user_data)->fsm.states.size()<<endl;
 
     for(int i=0, x=80, y=80; i<((ChData *)user_data)->fsm.states.size(); i++)
     {
@@ -69,6 +78,10 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
         {
             y=y+180;
         }
+    }*/
+    for(int i=0, x=80, y=80; i<nodesCoord.nodesCount; i++)
+    {
+        do_drawing(cr, "node", nodesCoord.coordx[i], nodesCoord.coordy[i]);
     }
 
 
@@ -206,8 +219,6 @@ FSM loadFSM(char *filename, gpointer data)
         fsm.connectAll();
         file.close();
 
-
-
         //int i=0;
         /*for(int i=0; i<fsm.transitions.size(); i++)
         {
@@ -221,17 +232,40 @@ FSM loadFSM(char *filename, gpointer data)
         cp = "digraph finite_state_machine { rankdir=LR;   size=\"200,5\" node [shape = circle];\n";
         for(int i=0; i<fsm.states.size(); i++)
         {
-                for(int j=0; j<fsm.states[i]->getTransitionSize(); j++)
-                {
-                    cp += fsm.states[i]->Getname() + " -> " + fsm.states[i]->getTransition(j)->GetnextState() + " [ label = \"" + fsm.states[i]->getTransition(j)->Getevent() + "\" ];\n";
-                    //cout<<fsm.states[i]->Getname()<<" -> "<<fsm.states[i]->getTransition(j)->GetnextState()<<" [ label = \""<<fsm.states[i]->getTransition(j)->Getevent()<<"\" ];"<<endl;
-                }
+            for(int j=0; j<fsm.states[i]->getTransitionSize(); j++)
+            {
+                cp += fsm.states[i]->Getname() + " -> " + fsm.states[i]->getTransition(j)->GetnextState() + " [ label = \"" + fsm.states[i]->getTransition(j)->Getevent() + "\" ];\n";
+                //cout<<fsm.states[i]->Getname()<<" -> "<<fsm.states[i]->getTransition(j)->GetnextState()<<" [ label = \""<<fsm.states[i]->getTransition(j)->Getevent()<<"\" ];"<<endl;
+            }
         }
         cp+="}";
+        const char* ccp = cp.c_str();
         gvc = gvContext();
-
-        cout<<cp<<endl;
+        g = agmemread(ccp);
+        gvLayout(gvc, g, "dot");
+        //gvRender(gvc, g, "dot", NULL);
+        drawGraph(g);
+        //gvRenderFilename(gvc, g, "svg", "out.svg");
+        //gvRender(gvc, g, "plain", stdout);
+        gvFreeLayout(gvc, g);
+        agclose(g);
+        gvFreeContext(gvc);
+        //cout<<cp<<endl;
         return fsm;
     }
     else cout<<"CHYBA"<<endl;
+}
+
+void drawGraph(Agraph_t *g)
+{
+    Agnode_t *n;
+    int i=0;
+    nodesCoord.nodesCount=0;
+    for(n=agfstnode(g); n; n=agnxtnode(g, n), i++)
+    {
+        nodesCoord.coordx[nodesCoord.nodesCount]=ND_coord(n).x;
+        nodesCoord.coordy[nodesCoord.nodesCount++]=ND_coord(n).y;
+        cout<<ND_coord(n).x<<" : "<<ND_coord(n).y<<endl;
+    }
+
 }
