@@ -8,6 +8,7 @@
 
 FSM loadFSM(char *filename, gpointer data);
 static void do_drawing(cairo_t *, char* text, double x, double y);
+static void draw_line(cairo_t *, pointf *p, int size);
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
 void drawGraph(Agraph_t *g);
 using namespace std;
@@ -26,6 +27,9 @@ struct
     int nodesCount;
     int coordx[100];
     int coordy[100];
+    int farestx;
+    int faresty;
+    Agraph_t *g;
 } nodesCoord;
 
 extern "C" __declspec(dllexport) void
@@ -58,6 +62,7 @@ on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
 
         gulong h_id = g_signal_connect(G_OBJECT(((ChData *)user_data)->darea), "draw", G_CALLBACK(on_draw_event), user_data);
         //gtk_widget_get_preferred_size(((ChData *)user_data)->darea, )
+        gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.farestx+100, nodesCoord.faresty+100);
         //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
         //g_signal_handler_disconnect((((ChData *)user_data)->darea), h_id);
     }
@@ -79,13 +84,45 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
             y=y+180;
         }
     }*/
-    for(int i=0, x=80, y=80; i<nodesCoord.nodesCount; i++)
+    Agnode_t *n;
+    Agedge_t *e;
+    int i=0;
+    nodesCoord.nodesCount=0;
+    nodesCoord.farestx=0;
+    nodesCoord.faresty=0;
+    for(n=agfstnode(nodesCoord.g); n; n=agnxtnode(nodesCoord.g, n), i++)
+    {
+
+        cout<<ND_coord(n).x<<" : "<<ND_coord(n).y<<" === "<<ND_label(n)->text<<endl;
+        do_drawing(cr, ND_label(n)->text, ND_coord(n).x, ND_coord(n).y);
+        if(ND_coord(n).x > nodesCoord.farestx) nodesCoord.farestx = ND_coord(n).x;
+        if(ND_coord(n).y > nodesCoord.faresty) nodesCoord.faresty = ND_coord(n).y;
+        for(e=agfstout(nodesCoord.g,n);e;e=agnxtout(nodesCoord.g,e))
+        {
+
+            cout<<ED_label(e)->text<<" "<<ED_spl(e)->list->size<<endl;
+            draw_line(cr, ED_spl(e)->list->list, ED_spl(e)->list->size );
+        }
+    }
+    gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.farestx+100, nodesCoord.faresty+100);
+    /*for(int i=0; i<nodesCoord.nodesCount; i++)
     {
         do_drawing(cr, "node", nodesCoord.coordx[i], nodesCoord.coordy[i]);
-    }
+    }*/
 
 
     return FALSE;
+}
+
+static void draw_line(cairo_t *cr, pointf *p, int size)
+{
+
+    cairo_move_to(cr, p[0].x, p[0].y);
+    for(int i=1; i<size; i++)
+    {
+        cairo_line_to(cr, p[i].x, p[i].y);
+    }
+    cairo_stroke(cr);
 }
 
 static void do_drawing(cairo_t *cr, char* text, double x, double y)
@@ -244,12 +281,13 @@ FSM loadFSM(char *filename, gpointer data)
         g = agmemread(ccp);
         gvLayout(gvc, g, "dot");
         //gvRender(gvc, g, "dot", NULL);
-        drawGraph(g);
+        nodesCoord.g = g;
+        //drawGraph(g);
         //gvRenderFilename(gvc, g, "svg", "out.svg");
         //gvRender(gvc, g, "plain", stdout);
-        gvFreeLayout(gvc, g);
-        agclose(g);
-        gvFreeContext(gvc);
+        //gvFreeLayout(gvc, g);
+        //agclose(g);
+        //gvFreeContext(gvc);
         //cout<<cp<<endl;
         return fsm;
     }
@@ -261,11 +299,16 @@ void drawGraph(Agraph_t *g)
     Agnode_t *n;
     int i=0;
     nodesCoord.nodesCount=0;
+    nodesCoord.farestx=0;
+    nodesCoord.faresty=0;
     for(n=agfstnode(g); n; n=agnxtnode(g, n), i++)
     {
+
+        cout<<ND_coord(n).x<<" : "<<ND_coord(n).y<<" === "<<ND_label(n)->text<<" "<<GD_label(g)<<endl;
         nodesCoord.coordx[nodesCoord.nodesCount]=ND_coord(n).x;
         nodesCoord.coordy[nodesCoord.nodesCount++]=ND_coord(n).y;
-        cout<<ND_coord(n).x<<" : "<<ND_coord(n).y<<endl;
+        if(ND_coord(n).x > nodesCoord.farestx) nodesCoord.farestx = ND_coord(n).x;
+        if(ND_coord(n).y > nodesCoord.faresty) nodesCoord.faresty = ND_coord(n).y;
     }
 
 }
