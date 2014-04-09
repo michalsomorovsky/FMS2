@@ -7,7 +7,7 @@
 #include <gvc.h>
 
 FSM loadFSM(char *filename, gpointer data);
-static void do_drawing(cairo_t *, char* text, double x, double y);
+static void do_drawing(cairo_t *, char* text, double x, double y, double radius, double labelWidth, double labelHeight);
 static void draw_line(cairo_t *, pointf *p, int size);
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
 void drawGraph(Agraph_t *g);
@@ -30,6 +30,7 @@ struct
     int farestx;
     int faresty;
     Agraph_t *g;
+    bool drawn;
 } nodesCoord;
 
 extern "C" __declspec(dllexport) void
@@ -62,7 +63,8 @@ on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
 
         gulong h_id = g_signal_connect(G_OBJECT(((ChData *)user_data)->darea), "draw", G_CALLBACK(on_draw_event), user_data);
         //gtk_widget_get_preferred_size(((ChData *)user_data)->darea, )
-        gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.farestx+100, nodesCoord.faresty+100);
+        nodesCoord.drawn = false;
+        //gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.farestx+100, nodesCoord.faresty+100);
         //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
         //g_signal_handler_disconnect((((ChData *)user_data)->darea), h_id);
     }
@@ -84,6 +86,7 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
             y=y+180;
         }
     }*/
+
     Agnode_t *n;
     Agedge_t *e;
     int i=0;
@@ -93,43 +96,96 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
     for(n=agfstnode(nodesCoord.g); n; n=agnxtnode(nodesCoord.g, n), i++)
     {
 
-        cout<<ND_coord(n).x<<" : "<<ND_coord(n).y<<" === "<<ND_label(n)->text<<endl;
-        do_drawing(cr, ND_label(n)->text, ND_coord(n).x, ND_coord(n).y);
+        //cout<<ND_coord(n).x<<" : "<<ND_coord(n).y<<" === "<<ND_label(n)->text<<endl;
+        //cout<<ND_label(n)->space.x<<" : "<<ND_label(n)->space.y<<endl;
+        do_drawing(cr, ND_label(n)->text, ND_coord(n).x, ND_coord(n).y, ND_width(n)*33, ND_label(n)->dimen.x, ND_label(n)->dimen.y);
         if(ND_coord(n).x > nodesCoord.farestx) nodesCoord.farestx = ND_coord(n).x;
         if(ND_coord(n).y > nodesCoord.faresty) nodesCoord.faresty = ND_coord(n).y;
-        for(e=agfstout(nodesCoord.g,n);e;e=agnxtout(nodesCoord.g,e))
+        for(e=agfstout(nodesCoord.g,n); e; e=agnxtout(nodesCoord.g,e))
         {
 
-            cout<<ED_label(e)->text<<" "<<ED_spl(e)->list->size<<endl;
-            draw_line(cr, ED_spl(e)->list->list, ED_spl(e)->list->size );
+            //cout<<ED_label(e)->text<<" "<<ED_spl(e)->list->size<<endl;
+            //cout<<"port: "<<ED_tail_port(e).p.x<<endl;
+            //cout<<"posledny bod: "<<ED_spl(e)->list->list[ED_spl(e)->list->size-1].x<<" : "<<ED_spl(e)->list->list[ED_spl(e)->list->size-1].y<<endl;
+            draw_line(cr, ED_spl(e)->list->list, ED_spl(e)->list->size);
+            //cout<<ED_label(e)->text<<endl;
         }
     }
-    gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.farestx+100, nodesCoord.faresty+100);
+    //nodesCoord.drawn = false;
+    gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.farestx+200, nodesCoord.faresty+200);
+    //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
     /*for(int i=0; i<nodesCoord.nodesCount; i++)
     {
         do_drawing(cr, "node", nodesCoord.coordx[i], nodesCoord.coordy[i]);
     }*/
-
-
     return FALSE;
 }
 
 static void draw_line(cairo_t *cr, pointf *p, int size)
 {
-
+    double angle;
+    double x1, y1, x2, y2;
+    cairo_set_source_rgb(cr, 1.0,0.0,0.0);
+    for(int i=0; i<size; i++)
+    {
+        cairo_arc(cr, p[i].x, p[i].y, 2, 0, 360);
+    }
+    cairo_stroke(cr);
+    cairo_set_source_rgb (cr, 0.0, 0.0, 1.0);
     cairo_move_to(cr, p[0].x, p[0].y);
     for(int i=1; i<size; i++)
     {
-        cairo_line_to(cr, p[i].x, p[i].y);
+        if(size==2)
+        {
+            cairo_line_to(cr, p[i].x, p[i].y);
+
+        }
+        else if(size==3)
+        {
+            cairo_curve_to(cr, p[i-1].x+2/3*(p[i].x-p[i-1].x), p[i-1].y+2/3*(p[i].y-p[i-1].y), p[i+1].x+2/3*(p[i].x-p[i+1].x), p[i+1].y+2/3*(p[i].y-p[i+1].y), p[i+1].x, p[i+1].y);
+            i=2;
+        }
+        else
+        {
+            if((size-i)==1)
+            {
+
+                cairo_line_to(cr, p[i].x, p[i].y);
+            }
+            else if((size-i)==2)
+            {
+
+                cairo_curve_to(cr, p[i-1].x+2/3*(p[i].x-p[i-1].x), p[i-1].y+2/3*(p[i].y-p[i-1].y), p[i+1].x+2/3*(p[i].x-p[i+1].x), p[i+1].y+2/3*(p[i].y-p[i+1].y), p[i+1].x, p[i+1].y);
+                i+=2;
+            }
+            else
+            {
+                cairo_curve_to(cr, p[i].x, p[i].y, p[i+1].x, p[i+1].y, p[i+2].x, p[i+2].y);
+
+                i+=2;
+            }
+        }
+        if(i==size-1)
+        {
+            angle = atan2(p[i].x - p[i-1].x, p[i].y-p[i-1].y)*(180/M_PI);
+            cout<<angle<<"o"<<endl;
+                x1=p[i].x+10*cos(angle-20);
+                y1=p[i].y+10*sin(angle-20);
+                x2=p[i].x+10*cos(angle+20);
+                y2=p[i].y+10*sin(angle+20);
+                cairo_line_to(cr, x1, y1);
+                cairo_move_to(cr, p[i].x, p[i].y);
+                cairo_line_to(cr, x2, y2);
+        }
     }
     cairo_stroke(cr);
 }
 
-static void do_drawing(cairo_t *cr, char* text, double x, double y)
+static void do_drawing(cairo_t *cr, char* text, double x, double y, double radius, double labelWidth, double labelHeight)
 {
     double xc = x;
     double yc = y;
-    double radius = 80.0;
+    //double radius = 80.0;
     double angle1 = 0.0  * (M_PI/180.0);  /* angles are specified */
     double angle2 = 360.0 * (M_PI/180.0);  /* in radians           */
 
@@ -159,7 +215,7 @@ static void do_drawing(cairo_t *cr, char* text, double x, double y)
     pango_layout_set_text (layout, text, -1);
 
     cairo_set_source_rgb (cr, 0.0, 0.0, 1.0);
-    cairo_move_to (cr, x-20, y-5);
+    cairo_move_to (cr, x-labelWidth/2, y-labelHeight/2);
     pango_cairo_show_layout (cr, layout);
 
     g_object_unref (layout);
@@ -235,7 +291,7 @@ FSM loadFSM(char *filename, gpointer data)
         string action;
         while(getline(file, line))
         {
-            if(line.find_first_of("`", 0, 1)==0) cout<<"koment: "<<endl;
+            if(line.find_first_of("`", 0, 1)==0) continue;
             else if(line.find_first_of("[", 0,1)==0)
             {
                 if(line.find_first_of("=")!=string::npos) action = line.substr(line.find_first_of("="), string::npos);
@@ -266,7 +322,7 @@ FSM loadFSM(char *filename, gpointer data)
             }
         }*/
         string cp;
-        cp = "digraph finite_state_machine { rankdir=LR;   size=\"200,5\" node [shape = circle];\n";
+        cp = "digraph finite_state_machine { rankdir=LR;   size=\"200\" node [shape = circle];\n";
         for(int i=0; i<fsm.states.size(); i++)
         {
             for(int j=0; j<fsm.states[i]->getTransitionSize(); j++)
