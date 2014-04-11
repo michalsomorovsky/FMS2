@@ -22,14 +22,14 @@ void FSM::addTransition(string transition)
     //cout<<transition<<endl;
 }
 
-void FSM::addState(string state, string action)
+void FSM::addState(string state, string action, string comment)
 {
     //cout<<text<<endl;
     /*int i=0;
     while(!states[i].isEmpty()) i++;
     states[i].Setname(state);
     states[i].Setaction(action);*/
-    states.push_back(new State(state, action, states.size()));
+    states.push_back(new State(state, action, states.size(), comment));
 }
 
 void FSM::connectAll()

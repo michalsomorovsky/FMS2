@@ -6,11 +6,17 @@
 #include <math.h>
 #include <gvc.h>
 
+#ifdef WIN32
+#define DLLEXPORT __declspec(dllexport)
+#endif // WIN32
+
 FSM loadFSM(char *filename, gpointer data);
 static void do_drawing(cairo_t *, char* text, double x, double y, double radius, double labelWidth, double labelHeight);
 static void draw_line(cairo_t *, pointf *p, int size);
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
 void drawGraph(Agraph_t *g);
+void export_fsm(char *filename);
+
 using namespace std;
 
 typedef struct _ChData ChData;
@@ -31,11 +37,16 @@ struct
     int faresty;
     Agraph_t *g;
     bool drawn;
+    bool zoom;
+    double zoomLevel;
+    FSM fsm;
 } nodesCoord;
 
-extern "C" __declspec(dllexport) void
-on_toolbutton1_clicked (GtkToolButton *button, gpointer data)
+extern "C" DLLEXPORT void
+on_toolbutton1_clicked (GtkToolButton *button, gpointer user_data)
 {
+    nodesCoord.zoom = true;
+    gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
     //cairo_t *cr;
     //g_signal_connect(G_OBJECT(((ChData *)data)->darea), "draw", G_CALLBACK(on_draw_event), (void *)"lamka");
     //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)data)->darea));
@@ -43,7 +54,7 @@ on_toolbutton1_clicked (GtkToolButton *button, gpointer data)
     //g_print("lama");
 }
 
-extern "C" __declspec(dllexport) void
+extern "C" DLLEXPORT void
 on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 
@@ -58,6 +69,7 @@ on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
         filename = gtk_file_chooser_get_filename(f);
         g_print(filename);
         FSM fsm = loadFSM(filename, user_data);
+        nodesCoord.fsm = fsm;
         //cout<<sizeof(fsm)<<endl;
         //cout<<sizeof(((ChData *)user_data)->fsm)<<endl;
 
@@ -69,7 +81,37 @@ on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
         //g_signal_handler_disconnect((((ChData *)user_data)->darea), h_id);
     }
     gtk_widget_hide(GTK_WIDGET(f));
+}
 
+extern "C" DLLEXPORT void
+on_imagemenuitem3_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GtkWidget *dialog;
+
+     dialog = gtk_file_chooser_dialog_new ("Save File",
+     				      GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(menuitem))),
+     				      GTK_FILE_CHOOSER_ACTION_SAVE,
+     				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+     				      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+     				      NULL);
+
+     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    {
+        char *filename;
+        filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        export_fsm(filename);
+    }
+    gtk_widget_destroy(dialog);
+}
+
+
+extern "C" DLLEXPORT void
+on_hscale1_value_changed(GtkRange *range, gpointer user_data)
+{
+    nodesCoord.zoomLevel = gtk_range_get_value(range)/100;
+    nodesCoord.zoom = true;
+    gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
+    //gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.zoomLevel*(nodesCoord.farestx+200), nodesCoord.zoomLevel*(nodesCoord.faresty+200));
 }
 
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
@@ -86,6 +128,12 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
             y=y+180;
         }
     }*/
+
+    if(nodesCoord.zoom)
+    {
+        cairo_scale(cr, nodesCoord.zoomLevel, nodesCoord.zoomLevel);
+
+    }
 
     Agnode_t *n;
     Agedge_t *e;
@@ -113,11 +161,13 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
     }
     //nodesCoord.drawn = false;
     gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.farestx+200, nodesCoord.faresty+200);
+    //gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), 0.5*(nodesCoord.farestx+200), 0.5*(nodesCoord.faresty+200));
     //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
     /*for(int i=0; i<nodesCoord.nodesCount; i++)
     {
         do_drawing(cr, "node", nodesCoord.coordx[i], nodesCoord.coordy[i]);
     }*/
+
     return FALSE;
 }
 
@@ -125,13 +175,13 @@ static void draw_line(cairo_t *cr, pointf *p, int size)
 {
     double angle;
     double x1, y1, x2, y2;
-    cairo_set_source_rgb(cr, 1.0,0.0,0.0);
+    /*cairo_set_source_rgb(cr, 1.0,0.0,0.0);
     for(int i=0; i<size; i++)
     {
         cairo_arc(cr, p[i].x, p[i].y, 2, 0, 360);
     }
     cairo_stroke(cr);
-    cairo_set_source_rgb (cr, 0.0, 0.0, 1.0);
+    cairo_set_source_rgb (cr, 0.0, 0.0, 1.0);*/
     cairo_move_to(cr, p[0].x, p[0].y);
     for(int i=1; i<size; i++)
     {
@@ -167,18 +217,31 @@ static void draw_line(cairo_t *cr, pointf *p, int size)
         }
         if(i==size-1)
         {
-            angle = atan2(p[i].x - p[i-1].x, p[i].y-p[i-1].y)*(180/M_PI);
-            cout<<angle<<"o"<<endl;
-                x1=p[i].x+10*cos(angle-20);
-                y1=p[i].y+10*sin(angle-20);
-                x2=p[i].x+10*cos(angle+20);
-                y2=p[i].y+10*sin(angle+20);
+            angle = atan2(p[i].y-p[i-1].y, p[i].x - p[i-1].x)+M_PI;
+                x1=p[i].x+10*cos(angle-0.34906585);
+                y1=p[i].y+10*sin(angle-0.34906585);
+                x2=p[i].x+10*cos(angle+0.34906585);
+                y2=p[i].y+10*sin(angle+0.34906585);
                 cairo_line_to(cr, x1, y1);
                 cairo_move_to(cr, p[i].x, p[i].y);
                 cairo_line_to(cr, x2, y2);
         }
     }
+
     cairo_stroke(cr);
+    cairo_move_to(cr, 50,50);
+    cairo_line_to(cr, 50, 0);
+    angle = atan2(50 - 50, 0-50)*(180/M_PI);
+
+                /*x1=p[i].x+10*cos(angle-20);
+                y1=p[i].y+10*sin(angle-20);
+                x2=p[i].x+10*cos(angle+20);
+                y2=p[i].y+10*sin(angle+20);
+                cairo_arc(cr, x1, y1, 2, 0, 360);
+                cairo_arc(cr, x2, y2, 2, 0, 360);
+                cairo_line_to(cr, x1, y1);
+                cairo_move_to(cr, p[i].x, p[i].y);
+                cairo_line_to(cr, x2, y2);*/
 }
 
 static void do_drawing(cairo_t *cr, char* text, double x, double y, double radius, double labelWidth, double labelHeight)
@@ -277,6 +340,25 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void export_fsm(char *filename)
+{
+    ofstream file(filename);
+    if(file.is_open())
+    {
+        for(int i=0; i<nodesCoord.fsm.states.size(); i++)
+        {
+            if(!nodesCoord.fsm.states[i]->getComment().empty()) file<<nodesCoord.fsm.states[i]->getComment();
+            file<<"["<<nodesCoord.fsm.states[i]->Getname()<<"]"<<nodesCoord.fsm.states[i]->Getaction()<<"\n";
+            for(int j=0; j<nodesCoord.fsm.states[i]->getTransitionSize(); j++)
+            {
+                file<<"\t"<<nodesCoord.fsm.states[i]->getTransition(j)->Getevent()<<" = "<<nodesCoord.fsm.states[i]->getTransition(j)->GetnextState()<<endl;
+            }
+            file<<endl;
+        }
+        file.close();
+    }
+}
+
 FSM loadFSM(char *filename, gpointer data)
 {
     ifstream file (filename);
@@ -284,19 +366,24 @@ FSM loadFSM(char *filename, gpointer data)
     FSM fsm;
     GVC_t *gvc;
     Agraph_t *g;
-
+    string comment;
 
     if(file.is_open())
     {
         string action;
         while(getline(file, line))
         {
-            if(line.find_first_of("`", 0, 1)==0) continue;
+            if(line.find_first_of("`", 0, 1)==0)
+            {
+                comment += line+"\n";
+            }
             else if(line.find_first_of("[", 0,1)==0)
             {
                 if(line.find_first_of("=")!=string::npos) action = line.substr(line.find_first_of("="), string::npos);
                 else action = string::npos;
-                fsm.addState(line.substr(1, line.find("]")-1), action);
+                //if(comment.empty()){ comment = string::npos; }
+                fsm.addState(line.substr(1, line.find("]")-1), action, comment);
+                comment.clear();
                 //fsm.addState(line);
                 //cout<<"stav: ";
             }

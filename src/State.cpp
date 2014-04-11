@@ -3,11 +3,12 @@
 
 using namespace std;
 
-State::State(string name, string action, int index)
+State::State(string name, string action, int index, string comment)
 {
     this->name = name;
     this->action = action;
     this->index = index;
+    this->comment = comment;
 }
 
 State::~State()

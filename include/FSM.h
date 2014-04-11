@@ -15,7 +15,7 @@ class FSM
         int** t2;
         FSM();
         virtual ~FSM();
-        void addState(string state, string action);
+        void addState(string state, string action, string comment);
         void addTransition(string transiton);
         void connectAll();
     protected:
