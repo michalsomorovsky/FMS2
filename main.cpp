@@ -10,11 +10,17 @@
 #define DLLEXPORT __declspec(dllexport)
 #endif // WIN32
 
+//loading FSM from file to internal representation
 FSM loadFSM(char *filename, gpointer data);
+//draw nodes of FSM
 static void do_drawing(cairo_t *, char* text, double x, double y, double radius, double labelWidth, double labelHeight);
+//draw connections between nodes
 static void draw_line(cairo_t *, pointf *p, int size);
+//draw event
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
+//not usefull //debug //experimental
 void drawGraph(Agraph_t *g);
+//export FSM from internal representation to file
 void export_fsm(char *filename);
 
 using namespace std;
@@ -40,13 +46,24 @@ struct
     bool zoom;
     double zoomLevel;
     FSM fsm;
+    GtkBuilder      *builder;
 } nodesCoord;
 
 extern "C" DLLEXPORT void
 on_toolbutton1_clicked (GtkToolButton *button, gpointer user_data)
 {
-    nodesCoord.zoom = true;
-    gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
+    //GtkWidget *popup = GTK_WIDGET (gtk_builder_get_object (nodesCoord.builder, "window2"));
+    //gtk_widget_show(popup);
+
+    nodesCoord.fsm.addState("lama", "lama1", "lama2");
+    Agnode_t *n;
+    if(n = agnode(nodesCoord.g, "lama", TRUE)) cout<<"true"<<endl;
+    else cout<<"false"<<endl;
+    //ND_coord(n).x = 10;
+    //ND_coord(n).y = 10;
+    //cout<<"toolbiutton1"<<endl;
+    //nodesCoord.zoom = true;
+    //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)user_data)->darea));
     //cairo_t *cr;
     //g_signal_connect(G_OBJECT(((ChData *)data)->darea), "draw", G_CALLBACK(on_draw_event), (void *)"lamka");
     //gtk_widget_queue_draw(GTK_WIDGET(((ChData *)data)->darea));
@@ -229,9 +246,9 @@ static void draw_line(cairo_t *cr, pointf *p, int size)
     }
 
     cairo_stroke(cr);
-    cairo_move_to(cr, 50,50);
+    /*cairo_move_to(cr, 50,50);
     cairo_line_to(cr, 50, 0);
-    angle = atan2(50 - 50, 0-50)*(180/M_PI);
+    angle = atan2(50 - 50, 0-50)*(180/M_PI);*/
 
                 /*x1=p[i].x+10*cos(angle-20);
                 y1=p[i].y+10*sin(angle-20);
@@ -316,7 +333,7 @@ int main(int argc, char *argv[])
     window = GTK_WIDGET (gtk_builder_get_object (builder, "window1"));
     area = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "drawingarea1"));
     button = GTK_BUTTON(gtk_builder_get_object(builder, "button1"));
-
+    nodesCoord.builder = builder;
     data = g_slice_new( ChData );
     data->darea = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "drawingarea1"));
     data->file_chooser = GTK_FILE_CHOOSER(gtk_builder_get_object(builder, "filechooserdialog1"));
@@ -324,7 +341,7 @@ int main(int argc, char *argv[])
     gtk_builder_connect_signals (builder, data);
 
     //g_signal_connect(G_OBJECT(area), "draw", G_CALLBACK(on_draw_event), NULL);
-    g_object_unref (G_OBJECT (builder));
+
     //g_signal_connect(G_OBJECT(area), "draw", G_CALLBACK(on_draw_event), NULL);
     //g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(on_button1_clicked), NULL);
 
@@ -336,7 +353,7 @@ int main(int argc, char *argv[])
     gtk_widget_show (window);
 
     gtk_main ();
-
+    g_object_unref (G_OBJECT (builder));
     return 0;
 }
 
