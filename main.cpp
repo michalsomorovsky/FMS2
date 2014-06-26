@@ -42,23 +42,58 @@ struct
     int farestx;
     int faresty;
     Agraph_t *g;
+    GVC_t* gvc;
     bool drawn;
     bool zoom;
     double zoomLevel;
     FSM fsm;
     GtkBuilder      *builder;
+    int handler_id;
 } nodesCoord;
 
+gboolean darea_clicked (GtkWidget *widget,
+               GdkEvent  *event,
+               gpointer   user_data)
+ {
+   g_print("clicked\n");
+   cout<<event->button.x<<endl;;
+   cout<<event->button.y<<endl;
+   g_signal_handler_disconnect(widget, nodesCoord.handler_id);
+   //agset(user_data, "pos", "5");
+   //cout<<ND_coord(user_data).x<<" "<<ND_coord(user_data).y<<endl;
+   return true;
+ }
+
+//add new state button
 extern "C" DLLEXPORT void
 on_toolbutton1_clicked (GtkToolButton *button, gpointer user_data)
 {
     //GtkWidget *popup = GTK_WIDGET (gtk_builder_get_object (nodesCoord.builder, "window2"));
     //gtk_widget_show(popup);
-
+    GtkWidget* darea = GTK_WIDGET(gtk_builder_get_object(nodesCoord.builder, "drawingarea1"));
     nodesCoord.fsm.addState("lama", "lama1", "lama2");
     Agnode_t *n;
-    if(n = agnode(nodesCoord.g, "lama", TRUE)) cout<<"true"<<endl;
-    else cout<<"false"<<endl;
+    Agsym_t *sym;
+    sym =0;
+        while(sym = agnxtattr(nodesCoord.g, AGNODE, sym))
+        {
+            cout<<sym->name<<" "<<sym->defval<<endl;
+        }
+    /*if(n = agnode(nodesCoord.g, "lama", TRUE))
+    {
+
+        Agsym_t* pos = agattr(nodesCoord.g, AGNODE, "pos", "1.0,1.0");
+        cout<<pos->name<<endl;
+        cout<<pos->defval<<endl;
+        cout<<agset(n, "coord", "50.0,50.0")<<endl;
+        //gvLayout(nodesCoord.gvc, nodesCoord.g, "dot");
+
+        cout<<ND_pos(n)<<endl;
+        cout<<ND_coord(n).x<<" "<<ND_coord(n).y<<endl;
+    }
+    else cout<<"false"<<endl;*/
+    nodesCoord.handler_id = g_signal_connect(G_OBJECT(darea), "button-press-event", G_CALLBACK(darea_clicked), (void *)n);
+
     //ND_coord(n).x = 10;
     //ND_coord(n).y = 10;
     //cout<<"toolbiutton1"<<endl;
@@ -71,6 +106,8 @@ on_toolbutton1_clicked (GtkToolButton *button, gpointer user_data)
     //g_print("lama");
 }
 
+
+//open file dialog
 extern "C" DLLEXPORT void
 on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
@@ -100,6 +137,7 @@ on_imagemenuitem2_activate(GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_hide(GTK_WIDGET(f));
 }
 
+//save file dialog
 extern "C" DLLEXPORT void
 on_imagemenuitem3_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
@@ -121,7 +159,7 @@ on_imagemenuitem3_activate(GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_destroy(dialog);
 }
 
-
+//zoom graph
 extern "C" DLLEXPORT void
 on_hscale1_value_changed(GtkRange *range, gpointer user_data)
 {
@@ -131,8 +169,8 @@ on_hscale1_value_changed(GtkRange *range, gpointer user_data)
     //gtk_widget_set_size_request(GTK_WIDGET(((ChData *)user_data)->darea), nodesCoord.zoomLevel*(nodesCoord.farestx+200), nodesCoord.zoomLevel*(nodesCoord.faresty+200));
 }
 
-static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
-                              gpointer user_data)
+//draw graph
+static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
     /*cout<<((ChData *)user_data)->fsm.states.size()<<endl;
 
@@ -188,6 +226,7 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
     return FALSE;
 }
 
+//draw connections
 static void draw_line(cairo_t *cr, pointf *p, int size)
 {
     double angle;
@@ -261,6 +300,7 @@ static void draw_line(cairo_t *cr, pointf *p, int size)
                 cairo_line_to(cr, x2, y2);*/
 }
 
+//draw states
 static void do_drawing(cairo_t *cr, char* text, double x, double y, double radius, double labelWidth, double labelHeight)
 {
     double xc = x;
@@ -339,6 +379,7 @@ int main(int argc, char *argv[])
     data->file_chooser = GTK_FILE_CHOOSER(gtk_builder_get_object(builder, "filechooserdialog1"));
 
     gtk_builder_connect_signals (builder, data);
+    gtk_widget_add_events(GTK_WIDGET(data->darea), GDK_BUTTON_PRESS_MASK);
 
     //g_signal_connect(G_OBJECT(area), "draw", G_CALLBACK(on_draw_event), NULL);
 
@@ -438,10 +479,18 @@ FSM loadFSM(char *filename, gpointer data)
         cp+="}";
         const char* ccp = cp.c_str();
         gvc = gvContext();
+        nodesCoord.gvc = gvc;
         g = agmemread(ccp);
         gvLayout(gvc, g, "dot");
         //gvRender(gvc, g, "dot", NULL);
         nodesCoord.g = g;
+
+        Agsym_t *sym;
+        sym =0;
+        while(sym = agnxtattr(nodesCoord.g, AGNODE, sym))
+        {
+            cout<<sym->name<<" "<<sym->defval<<endl;
+        }
         //drawGraph(g);
         //gvRenderFilename(gvc, g, "svg", "out.svg");
         //gvRender(gvc, g, "plain", stdout);
